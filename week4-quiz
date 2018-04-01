@@ -1,0 +1,106 @@
+##1
+library(ElemStatLearn)
+data(vowel.train)
+data(vowel.test)
+
+training <- vowel.train
+training[,1] <- as.factor(training$y)
+testing <- vowel.test
+testing[,1] <- as.factor(testing$y)
+
+set.seed(33833)
+mod1 <- train(y ~.,method="rf",data=training)
+mod2 <- train(y ~., method="gbm",data=training)
+
+pred1 <- predict(mod1,testing)
+pred2 <- predict(mod2,testing)
+
+confusionMatrix(pred1,testing[,1])
+confusionMatrix(pred2,testing[,1])
+confusionMatrix(pred1,pred2)
+
+##2
+library(caret)
+library(gbm)
+
+set.seed(62433)
+library(AppliedPredictiveModeling)
+
+data(AlzheimerDisease)
+adData = data.frame(diagnosis,predictors)
+inTrain = createDataPartition(adData$diagnosis, p = 3/4)[[1]]
+training = adData[ inTrain,]
+testing = adData[-inTrain,]
+
+mod1 <- train(diagnosis ~., method="rf",data=training)
+mod2 <- train(diagnosis ~., method="gbm",data=training)
+mod3 <- train(diagnosis ~., method="lda",data=training)
+
+pred1 <- predict(mod1,testing)
+pred2 <- predict(mod2,testing)
+pred3 <- predict(mod3,testing)
+
+predDF <- data.frame(pred1,pred2,pred3,diagnosis=testing$diagnosis)
+
+combModFit <- train(diagnosis~.,method="rf",data=predDF)
+combPred <- predict(combModFit,predDF)
+
+confusionMatrix(combPred,testing$diagnosis)
+confusionMatrix(pred1,testing$diagnosis)
+confusionMatrix(pred2,testing$diagnosis)
+confusionMatrix(pred3,testing$diagnosis)
+
+##3
+
+library(AppliedPredictiveModeling)
+data(concrete)
+set.seed(233)
+
+inTrain = createDataPartition(concrete$CompressiveStrength, p = 3/4)[[1]]
+training = concrete[ inTrain,]
+testing = concrete[-inTrain,]
+
+library(lars)
+data <- as.matrix(concrete)
+x <- data[,1:8]
+y <- data[,9]
+la <- lars(x,y,type="lar")
+
+## 4
+library(lubridate) # For year() function below
+dat = read.csv(".\\gaData.csv")
+training = dat[year(dat$date) < 2012,]
+testing = dat[(year(dat$date)) > 2011,]
+tstrain = ts(training$visitsTumblr)
+tstest = ts(testing$visitsTumblr)
+
+etsl <- bats(tstrain)
+fcast <- forecast(etsl)
+
+
+## 5
+
+library(AppliedPredictiveModeling)
+data(concrete)
+set.seed(325)
+
+inTrain = createDataPartition(concrete$CompressiveStrength, p = 3/4)[[1]]
+training = concrete[ inTrain,]
+testing = concrete[-inTrain,]
+
+library(e1071)
+fit <- svm(CompressiveStrength ~.,data=training)
+pred <- predict(fit, testing)
+
+tot <- sum((pred-testing[,9])^2)
+n <- length(testing[,9])
+sqrt(tot/n)
+
+
+
+
+
+
+
+
+
