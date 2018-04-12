@@ -1,0 +1,96 @@
+---
+title: "ML_project_ZD"
+author: "dong zhang"
+date: "2018Äê4ÔÂ9ÈÕ"
+output: html_document
+---
+
+This report is to show how to predict the manner in which they did the exercise. Firstly it is import to perform feature selection to the original data in order to expel the variables which have near-zero variation or too much NA. Then the data is preprocessed by normalization. The normalized data can be trained by machine learning methods. In this case, the decision tree and random forest are used for classsifiction of manner in the exercise and the latter one shows better accuracy with 0.67% as the prediction error. Therefore, the model trained by random forest is used for prediction to the testing data and the predicting results are E A A E A C D D A E B C D A E D E B E E. 
+
+##**Import data and packages for training**
+### Import required packages
+```{r,echo=TRUE,results='asis'}
+options(warn = -1)
+library(lattice)
+library(ggplot2)
+library(caret)
+library(ElemStatLearn)
+```
+
+### Import data
+```{r,echo=TRUE,results='hide'}
+data <- read.csv(".\\pml-training.csv")
+```
+
+##**Feature selection**
+
+There are a great number of variables in the original data. It is necessary to simplify the variable in the predicting model. If the variations of variables are nero zero or the variables have too many NA, then it is necessary to ignore these variables in the modelling.
+
+### Delete variables whose variations are near zero.
+```{r, echo=TRUE,results='hide'}
+var_sel <- nearZeroVar(data,freqCut=)
+newdata <- data[,-var_sel]
+```
+
+### Delete variables containing NA
+```{r,echo=TRUE,results='hide'}
+na_flag <- apply(is.na(newdata), 2, sum)
+newdata1 <- newdata[, which(na_flag == 0)]
+```
+
+##**Preprocess by normalization**
+It is important to preprocess the data by normalization in order to avoid the problem of dimension. 
+
+```{r,echo=TRUE,results='hide'}
+newdata1_pre <- preProcess(newdata1[,7:58],method=c("center","scale"))
+newdata1_prepro <- predict(newdata1_pre,newdata1[,7:58])
+newdata2 <- cbind(newdata1[,c(1:6,59)],newdata1_prepro)
+newdata3 <- newdata2[,7:59]      
+```
+
+##**Machine learning**
+The two methods, decision tree and random forest, are used to train the data. The prediction error of random forest model is 0.67% which is much smaller than 50.53% of decision tree model. 
+
+### train and test data
+```{r}
+inTrain <- createDataPartition(newdata3$classe,p=0.75,list=FALSE)
+training <- newdata3[inTrain,]
+testing <- newdata3[-inTrain,]
+```
+
+### CART Decision tree
+```{r}
+mod1 <- train(classe~.,method="rpart",data=training)
+pred1 <- predict(mod1,newdata=testing[,-1])
+accurate1 <- sum(pred1==testing$classe)/length(testing$classe)
+table(testing$classe,pred1)
+```
+
+### Random Forest
+```{r}
+mod2 <- train(classe~.,method="rf",data=training)
+pred2 <- predict(mod2,newdata=testing[,-1])
+accurate2 <- sum(pred2==testing$classe)/length(testing$classe)
+table(testing$classe,pred2)
+```
+
+##**Validation**
+The mod2 trained by random forest is used for validation. Like the training process above, the test data should also be preprocessed. After that, the prediction for the test data is performed and the predicting results are indicated by the variable pred3.
+
+```{r}
+data_val <- read.csv(".\\pml-testing.csv")
+var_sel <- nearZeroVar(data_val,freqCut=)
+newdata_val <- data_val[,-var_sel]
+na_flag <- apply(is.na(newdata_val), 2, sum)
+newdata4 <- newdata_val[, which(na_flag == 0)]
+newdata4_pre <- preProcess(newdata4[,7:58],method=c("center","scale"))
+newdata4_prepro <- predict(newdata4_pre,newdata4[,7:58])
+newdata5 <- cbind(newdata4[,c(1:6,59)],newdata4_prepro)
+newdata6 <- newdata5[,7:59]
+pred3 <- predict(mod2,newdata6)
+pred3
+```
+
+##**Conclusion**
+In this case, the decision tree and random forest are used for classsifiction of manner in the exercise and the latter one shows better accuracy with 0.67% as the prediction error. Therefore, the model trained by random forest is used for prediction to the testing data and the predicting results are E A A E A C D D A E B C D A E D E B E E. 
+
